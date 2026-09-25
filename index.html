@@ -1,0 +1,786 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>ACPナビ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap">
+<style>
+:root{
+  --ground:#F2F5F8; --surface:#FFFFFF; --surface-2:#E8EFF5;
+  --ink:#12324A; --ink-2:#2A465B; --line:#C5D3DE;
+  --calm:#1E5A80; --calm-bg:#E2EDF6; --on-calm:#FFFFFF;
+  --urgent:#B23A2B; --urgent-bg:#FAE8E4; --on-urgent:#FFFFFF;
+  --amber:#A8560F; --amber-bg:#FBEFE2;
+  --focus:#C9661A;
+  --radius:10px;
+  font-family:"BIZ UDPGothic","Meiryo","Yu Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#0E1820; --surface:#152431; --surface-2:#1C2F3E;
+    --ink:#E4EDF3; --ink-2:#BCCDDA; --line:#2F4658;
+    --calm:#8CC1E6; --calm-bg:#17334A; --on-calm:#0E1820;
+    --urgent:#F29383; --urgent-bg:#3B1F1B; --on-urgent:#0E1820;
+    --amber:#F2AE6B; --amber-bg:#3A2A18;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0E1820; --surface:#152431; --surface-2:#1C2F3E;
+  --ink:#E4EDF3; --ink-2:#BCCDDA; --line:#2F4658;
+  --calm:#8CC1E6; --calm-bg:#17334A; --on-calm:#0E1820;
+  --urgent:#F29383; --urgent-bg:#3B1F1B; --on-urgent:#0E1820;
+  --amber:#F2AE6B; --amber-bg:#3A2A18;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:inherit;font-size:16px;line-height:1.7;margin:0}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px;padding-block:0 48px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--ground);border-bottom:1px solid var(--line)}
+.top-in{max-width:1240px;margin:0 auto;padding:12px 16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px;flex:1 1 auto}
+.brand h1{font-size:22px;margin:0;letter-spacing:.02em}
+.brand span{font-size:14px;color:var(--ink-2)}
+.search{flex:1 1 320px;display:flex;gap:8px;align-items:center;background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:6px 14px}
+.search:focus-within{border-color:var(--focus)}
+.search input{flex:1;border:0;background:transparent;color:var(--ink);font:inherit;font-size:16px;outline:none;min-width:0}
+.search svg{flex:none}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+.layout{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:24px;margin-top:20px;align-items:start}
+@media (max-width:980px){.layout{grid-template-columns:1fr}}
+
+.eyebrow{font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--ink-2);margin:0 0 8px}
+h2{font-size:20px;margin:0 0 12px;text-wrap:balance}
+h3{font-size:18px;margin:0 0 8px;text-wrap:balance}
+
+/* step 1 */
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:560px){.choices{grid-template-columns:1fr}}
+.choice{text-align:left;border:2px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:16px;display:grid;gap:4px}
+.choice .k{font-size:13px;font-weight:700;letter-spacing:.06em}
+.choice .t{font-size:20px;font-weight:700}
+.choice .d{font-size:14px;color:var(--ink-2)}
+.choice.calm .k{color:var(--calm)} .choice.urgent .k{color:var(--urgent)}
+.choice.calm:hover,.choice.calm[aria-pressed="true"]{border-color:var(--calm);background:var(--calm-bg)}
+.choice.urgent:hover,.choice.urgent[aria-pressed="true"]{border-color:var(--urgent);background:var(--urgent-bg)}
+
+section.step{margin-top:24px}
+.subs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.subs{grid-template-columns:1fr}}
+.sub{text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:12px 14px}
+.sub b{display:block;font-size:16px}
+.sub small{display:block;font-size:14px;color:var(--ink-2);line-height:1.5;margin-top:2px}
+.sub:hover{border-color:var(--ink-2)}
+.sub[aria-pressed="true"]{border-color:var(--mode);background:var(--mode-bg);box-shadow:inset 4px 0 0 var(--mode)}
+
+/* result */
+.result{margin-top:24px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.result-head{background:var(--mode);color:var(--on-mode);padding:14px 18px}
+.result-head .crumb{font-size:13px;font-weight:700;letter-spacing:.06em;opacity:.95}
+.result-head h2{color:inherit;margin:2px 0 0;font-size:21px}
+.result-body{padding:16px 18px;display:grid;gap:20px}
+.summary{background:var(--mode-bg);border-radius:8px;padding:12px 14px;font-weight:700}
+ol.flow{list-style:none;margin:0;padding:0;display:grid;gap:10px;counter-reset:f}
+ol.flow li{display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:start}
+ol.flow .n{width:40px;height:40px;border-radius:8px;background:var(--mode);color:var(--on-mode);display:grid;place-items:center;font-weight:700;font-size:17px}
+ol.flow .n.lg{font-size:20px}
+ol.flow b{display:block}
+ol.flow p{margin:2px 0 0;color:var(--ink-2);font-size:15px}
+.phrases{display:grid;gap:8px}
+.phrase{display:flex;gap:10px;align-items:flex-start;background:var(--surface-2);border-radius:8px;padding:10px 12px}
+.phrase .tag{flex:none;font-size:13px;font-weight:700;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:1px 8px;margin-top:2px}
+.phrase q{flex:1;quotes:"「" "」";font-size:16px}
+.copy{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:6px;font-size:13px;padding:3px 10px}
+.copy.done{border-color:var(--calm);color:var(--calm)}
+ul.cautions{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+ul.cautions li{background:var(--amber-bg);border-radius:8px;padding:8px 12px 8px 36px;position:relative}
+ul.cautions li::before{content:"!";position:absolute;left:12px;top:8px;width:16px;height:16px;border-radius:50%;background:var(--amber);color:var(--surface);font-size:12px;font-weight:700;display:grid;place-items:center;line-height:1}
+.rel{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:14px}
+.chip:hover{border-color:var(--ink-2)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--ground);border-color:var(--ink)}
+.reset{border:0;background:none;text-decoration:underline;color:var(--ink-2);font-size:14px;padding:0}
+.placeholder{margin-top:24px;border:1.5px dashed var(--line);border-radius:var(--radius);padding:18px;color:var(--ink-2)}
+
+/* library */
+aside.lib{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+@media (min-width:981px){aside.lib{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px);max-height:calc(100vh - 96px);overflow:auto}}
+.lib-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.count{font-size:14px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.cats{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
+.entries{display:grid;gap:8px}
+details.kb{border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+details.kb[open]{border-color:var(--ink-2)}
+details.kb summary{list-style:none;cursor:pointer;padding:10px 12px;display:grid;gap:2px}
+details.kb summary::-webkit-details-marker{display:none}
+details.kb summary .cat{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--ink-2)}
+details.kb summary .ti{font-weight:700;font-size:16px}
+details.kb .kb-body{padding:0 12px 12px;font-size:15px}
+details.kb .kb-body p{margin:0 0 8px}
+details.kb .kb-body ul{margin:0 0 8px;padding-left:1.2em}
+details.kb .src{font-size:13px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:6px;margin-top:6px}
+details.kb.flash{animation:flash 1.2s ease}
+@keyframes flash{0%{box-shadow:0 0 0 4px var(--focus)}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){details.kb.flash{animation:none}}
+.grid4{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 0 8px}
+.grid4 div{background:var(--surface-2);border-radius:6px;padding:8px 10px;font-size:14px;line-height:1.55}
+.grid4 b{display:block;font-size:14px}
+.tw{overflow-x:auto}
+table.mini{border-collapse:collapse;width:100%;font-size:14px;margin:4px 0 8px}
+table.mini th,table.mini td{border:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
+table.mini th{background:var(--surface-2)}
+.empty{color:var(--ink-2);font-size:15px;padding:8px 0}
+footer.note{margin-top:28px;font-size:14px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:12px}
+mark{background:var(--amber-bg);color:inherit;padding:0 2px;border-radius:3px}
+
+/* print menu */
+.printwrap{position:relative;flex:none}
+.printbtn{display:flex;align-items:center;gap:6px;border:1.5px solid var(--ink);background:var(--ink);color:var(--ground);border-radius:999px;padding:6px 14px;font-weight:700;font-size:15px}
+.printmenu{position:absolute;right:0;top:calc(100% + 6px);width:min(320px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 8px 24px rgba(10,30,45,.18);padding:8px;display:grid;gap:4px;z-index:20}
+.printmenu button{text-align:left;border:0;background:transparent;border-radius:8px;padding:8px 10px}
+.printmenu button:hover:not(:disabled){background:var(--surface-2)}
+.printmenu button:disabled{opacity:.55;cursor:not-allowed}
+.printmenu b{display:block;font-size:15px}
+.printmenu small{display:block;font-size:13px;color:var(--ink-2);line-height:1.5}
+.printnote{font-size:13px;color:var(--ink-2);background:var(--amber-bg);border-radius:8px;padding:8px 10px;margin:4px 0 0}
+#print-area{display:none}
+
+@media print{
+  @page{size:A4;margin:14mm 13mm}
+  :root,:root[data-theme="dark"]{color-scheme:light;
+    --ground:#FFFFFF; --surface:#FFFFFF; --surface-2:#EEF3F7; --ink:#000000; --ink-2:#1A2A36; --line:#8FA3B3;
+    --calm:#1E5A80; --calm-bg:#E6EFF6; --on-calm:#FFFFFF; --urgent:#9E2F22; --urgent-bg:#F8E6E2; --on-urgent:#FFFFFF;
+    --amber:#8A4608; --amber-bg:#FBEFE2;}
+  body{background:#fff;font-size:11pt;line-height:1.6;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  header.top,.wrap{display:none!important}
+  #print-area{display:block}
+  .p-doc h1{font-size:18pt;margin:0 0 2mm}
+  .p-doc .p-meta{font-size:9.5pt;margin:0 0 5mm;border-bottom:1pt solid var(--line);padding-bottom:2mm}
+  .p-scene{break-inside:auto;margin:0 0 6mm}
+  .p-scene + .p-scene{break-before:page}
+  .p-head{border-left:5pt solid var(--mode);background:var(--mode-bg);padding:2mm 4mm;margin:0 0 3mm}
+  .p-head .crumb{font-size:9.5pt;font-weight:700}
+  .p-head h2{font-size:14pt;margin:0}
+  .p-sum{font-weight:700;margin:0 0 3mm}
+  .p-doc h3{font-size:11.5pt;margin:4mm 0 1.5mm;border-bottom:.75pt solid var(--line);break-after:avoid}
+  .p-flow{margin:0;padding:0;list-style:none}
+  .p-flow li{display:grid;grid-template-columns:9mm 1fr;gap:2mm;margin:0 0 1.5mm;break-inside:avoid}
+  .p-flow .n{border:1pt solid var(--mode);color:var(--mode);font-weight:700;text-align:center;border-radius:2mm;height:7mm;line-height:7mm}
+  .p-flow b{display:block}
+  .p-ph{margin:0;padding:0;list-style:none}
+  .p-ph li{margin:0 0 1.2mm;break-inside:avoid}
+  .p-ph .tag{display:inline-block;font-size:9pt;font-weight:700;border:.75pt solid var(--line);border-radius:1.5mm;padding:0 1.5mm;margin-right:2mm}
+  .p-list{margin:0;padding-left:5mm}
+  .p-kb{break-inside:avoid;border:.75pt solid var(--line);border-radius:2mm;padding:2.5mm 3.5mm;margin:0 0 3mm}
+  .p-kb .cat{font-size:9pt;font-weight:700}
+  .p-kb h3{border:0;margin:0 0 1mm}
+  .p-kb p{margin:0 0 1.5mm}
+  .p-kb ul,.p-kb ol{margin:0 0 1.5mm;padding-left:5mm}
+  .p-kb .src{font-size:9pt;border-top:.5pt solid var(--line);padding-top:1mm;margin-top:1.5mm}
+  .p-note{font-size:9pt;margin-top:6mm;border-top:.75pt solid var(--line);padding-top:2mm}
+}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><h1>ACPナビ</h1><span>状況を選ぶと、進め方と使える言葉が出ます</span></div>
+    <label class="search" for="q">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input id="q" type="search" placeholder="関連知識を検索（例：4分割法、ICD、NURSE）" autocomplete="off">
+    </label>
+    <div class="printwrap">
+      <button class="printbtn" id="printbtn" aria-expanded="false" aria-controls="printmenu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>印刷
+      </button>
+      <div class="printmenu" id="printmenu" hidden>
+        <button id="pr-current" disabled><b>表示中の場面</b><small>選んだ場面の進め方・フレーズ・注意点・関連知識</small></button>
+        <button id="pr-mode"><b>非緊急／緊急のハンドブック</b><small>選んでいる側の全場面（未選択なら全8場面）</small></button>
+        <button id="pr-all"><b>全場面＋関連知識（完全版）</b><small>8場面すべてと関連知識27項目</small></button>
+        <button id="pr-kb"><b>関連知識だけ</b><small>いま絞り込んでいる項目（検索・カテゴリを反映）</small></button>
+        <p class="printnote" id="printnote" hidden>このプレビュー画面では印刷できません。GitHub Pages 版か、ダウンロードしたHTMLファイルをブラウザで開いて印刷してください。</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="layout">
+    <main>
+      <section>
+        <p class="eyebrow">ステップ 1</p>
+        <h2>いまの状況は？</h2>
+        <div class="choices">
+          <button class="choice calm" id="m-nonurgent" data-mode="nonurgent" aria-pressed="false">
+            <span class="k">非緊急ACP</span>
+            <span class="t">回復の見込みがある・万が一に備えて</span>
+            <span class="d">外来・安定期・退院前など。時間をかけて価値観を探る</span>
+          </button>
+          <button class="choice urgent" id="m-urgent" data-mode="urgent" aria-pressed="false">
+            <span class="k">緊急ACP</span>
+            <span class="t">差し迫った危機</span>
+            <span class="d">急性増悪・ICU入室や挿管の判断など。5〜10分で方針を決める</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="step" id="step2" hidden>
+        <p class="eyebrow">ステップ 2</p>
+        <h2 id="step2-title">どの場面ですか？</h2>
+        <div class="subs" id="subs"></div>
+      </section>
+
+      <div class="placeholder" id="placeholder">状況を選ぶと、ここにおすすめの進め方・使えるフレーズ・注意点・関連知識が表示されます。</div>
+      <article class="result" id="result" hidden></article>
+    </main>
+
+    <aside class="lib" id="lib" aria-label="関連知識">
+      <div class="lib-head"><h2 style="margin:0">関連知識</h2><span class="count" id="count"></span></div>
+      <div class="cats" id="cats"></div>
+      <div class="entries" id="entries"></div>
+    </aside>
+  </div>
+
+  <footer class="note">
+    教育・実践支援のための資料です。個々の判断は、施設の方針と担当チームの臨床判断に従ってください。会話例・フレーズは例示です。文献情報は利用前に原典で確認してください。
+  </footer>
+</div>
+<div id="print-area" aria-hidden="true"></div>
+
+<script>
+// ====================== 状況別のおすすめ ======================
+const SCENES = {
+  nonurgent: {
+    label: "非緊急ACP",
+    title: "どの場面ですか？",
+    subs: [
+      { id: "n-first", label: "初めて話す", hint: "外来・安定期。まだ価値観を聞いていない",
+        head: "楽しみから始めて、下限ラインを本人の言葉で見つける",
+        summary: "楽しみ → 生きがい → 気がかり → 生きている意味がない、の順に進み、本人にとって受け入れられない状態（下限ライン）を本人の言葉で特定する。1回で終わらせなくてよい。",
+        flow: [
+          ["導", "許可をとる", "「どなたにも伺っていること」と前置きし、悪い知らせではないことを伝える"],
+          ["1", "楽しみ", "答えやすい話題で関係をつくり、日常の具体像をつかむ"],
+          ["2", "生きがい", "役割・関係・誇りなど、価値観の核を知る"],
+          ["3", "気がかり", "不安や恐れを言葉にしてもらう。感情が動いたら先に応える"],
+          ["4", "生きている意味がない", "1・2で聞いた楽しみを物差しに「それができなくなったら？」と境界を探る"],
+          ["深", "各段階で深める", "Tell me more／Why?／What else? を行き来し、表面的な答えで止めない"],
+          ["締", "要約して返す", "本人の言葉で要約して確認。代理意思決定者を確認し、記録する"]
+        ],
+        phrases: [
+          ["導入", "今日は、これからの治療や生活について、〇〇さんが大事にしていることを少し伺ってもいいですか。どなたにも伺っていることです。"],
+          ["楽しみ", "最近、楽しみにしていることは何ですか。"],
+          ["生きがい", "〇〇さんにとって、生きがいや張り合いになっていることは何ですか。"],
+          ["気がかり", "これから先のことで、気がかりなことや心配なことはありますか。"],
+          ["下限", "どんな状態になったら、〇〇さんにとって「これでは生きている意味がない」と感じると思いますか。"],
+          ["下限（柔らかく）", "こうなったら、治療を続けるのはつらすぎる、と思うような状態はありますか。"],
+          ["深める", "そう思われるのは、どうしてですか。何かきっかけになった経験がありますか。"],
+          ["確認", "つまり〇〇さんにとっては、△△ができなくなることが一番受け入れがたい、ということで合っていますか。"]
+        ],
+        cautions: [
+          "いきなり「延命治療を希望しますか」と聞かない",
+          "「家族に迷惑をかけたくない」「寝たきりは嫌」で止めず、背景の理由まで聞く",
+          "車椅子・寝たきりなどのスケールを患者に見せて選ばせない。障害を「悪い状態」と決めつけない",
+          "話したくない様子なら、その日は段階4まで進めなくてよい"
+        ],
+        related: ["lowerline", "sicg", "nurse", "record", "surrogate", "mhlw", "trigger"]
+      },
+      { id: "n-review", label: "節目での見直し", hint: "再入院・治療選択の前・退院前カンファレンス",
+        head: "前回の本人の言葉を起点に、今も同じかを確かめる",
+        summary: "下限ラインは動く（response shift）。前回の記録から入り、今も同じかを確認し、今回の治療判断と結びつける。",
+        flow: [
+          ["1", "前回の記録を読む", "楽しみ・生きがい・下限ライン・代理意思決定者を確認しておく"],
+          ["2", "前回の言葉から入る", "「前回、〇〇とおっしゃっていました」と本人の言葉を返す"],
+          ["3", "変化を聞く", "変わっていれば、何がきっかけかを Why? で聞く"],
+          ["4", "見通しを伝える", "Ask-Tell-Ask で理解を確認しながら。I wish / I worry で希望と懸念を両方伝える"],
+          ["5", "ラインとの距離を共有", "「まだライン上か、近づいているか」を一緒に確認する"],
+          ["6", "次の見直し時期を決める", "次の節目（外来、次の入院など）を記録に残す"]
+        ],
+        phrases: [
+          ["起点", "前回、〇〇とおっしゃっていました。今も同じお気持ちですか。"],
+          ["変化", "お気持ちが変わったのは、どんなことがあったからですか。"],
+          ["Ask", "今の病気の状態について、どのように聞いていらっしゃいますか。"],
+          ["I wish / I worry", "このまま落ち着いてくれることを願っています。同時に、また悪くなることも心配しています。"],
+          ["共有", "〇〇さんが大事にしている△△が、少しずつ難しくなってきているように見えます。どう感じていますか。"]
+        ],
+        cautions: [
+          "以前「許容できない」と言っていた状態を、実際になると受け入れる人は少なくない。前回の答えを固定したものとして扱わない",
+          "変化を責めない。「気持ちは変わってよい」と伝える"
+        ],
+        related: ["responseshift", "trigger", "asktellask", "iwish", "hfcourse", "palliative", "record"]
+      },
+      { id: "n-reluctant", label: "話したがらない・お任せ", hint: "「縁起でもない」「先生にお任せします」",
+        head: "断る権利を尊重しつつ、扉を閉じない",
+        summary: "話し合わない選択も尊重する。そのうえで、知りたい情報の量と、一緒に話したい人を確認し、次の機会につなぐ。",
+        flow: [
+          ["1", "気持ちを受け止める", "「こういう話は気が進まないですよね」と、まず感情に応える"],
+          ["2", "情報の希望量を聞く", "どこまで詳しく知りたいかは人それぞれ。本人に選んでもらう"],
+          ["3", "話したい相手を聞く", "本人ではなく家族と話してほしい、という希望もありうる"],
+          ["4", "「お任せ」の中身を聞く", "任せる相手に何を大事にしてほしいかを尋ねる"],
+          ["5", "仮定形で入る", "「もしも、の話ですが」「皆さんに伺っているのですが」"],
+          ["6", "次につなぐ", "「また別の機会に伺ってもいいですか」。話し合いを希望しないことも記録する"]
+        ],
+        phrases: [
+          ["情報量", "病気のことを、どのくらい詳しく知っておきたいですか。"],
+          ["相手", "もしものときのことは、どなたと一緒に話しておきたいですか。"],
+          ["お任せ", "では、ご家族や私たちに任せるとき、何を一番大事にしてほしいですか。"],
+          ["仮定", "縁起でもない話で恐縮ですが、皆さんに伺っていることなので、もしも、の話として聞かせてください。"],
+          ["次へ", "今日はここまでにしましょう。また別の機会に、少しずつ伺ってもいいですか。"]
+        ],
+        cautions: [
+          "押し切らない。関係が壊れると次の機会も失う",
+          "「お任せ」を同意と受け取って話を終えない",
+          "家族が「本人には言わないで」と言う場合は、家族の心配を聞いたうえで、本人がどこまで知りたいかを本人に確認する"
+        ],
+        related: ["japanfeatures", "surrogate", "asktellask", "nurse", "mhlw"]
+      },
+      { id: "n-device", label: "デバイス治療を検討", hint: "ICD植込み・LVAD（DT）の検討",
+        head: "植込み前に、将来の停止や合併症時の方針まで話す",
+        summary: "デバイスは「つける」ときに「止める」話をしておくと、後の会話がずっと楽になる。本人の下限ラインと、デバイスと共に生きる生活を照らし合わせる。",
+        flow: [
+          ["1", "価値観を先に聞く", "楽しみ・生きがい・下限ラインを確認してから治療の話に入る"],
+          ["2", "ICD：停止の選択肢", "将来、状態が悪くなったら除細動機能を止める選択肢があることを植込み時に伝える"],
+          ["3", "ICD：止めても続くこと", "ペーシングや心不全治療は続けられる。苦痛が増えるわけではない"],
+          ["4", "LVAD：生活を具体的に", "装置管理・通院・介護者の必要など、装着後の生活像を示す"],
+          ["5", "LVAD：準備計画", "脳卒中などの重い合併症が起きたときの方針を、装着前に話しておく"],
+          ["6", "ラインとの整合", "その生活が本人のラインより上にあるかを本人と確認する"]
+        ],
+        phrases: [
+          ["ICD", "この機械は命を守るためのものですが、将来、状態が悪くなったときに、ショックの機能だけを止めるという選択もできます。"],
+          ["ICD", "機能を止めても、他の心臓の治療は続けられます。"],
+          ["LVAD", "装置をつけた後は、〜のような生活になります。〇〇さんが大事にしている△△と照らして、どう感じますか。"],
+          ["準備", "もしも装置をつけた後に重い合併症が起きたら、どのように考えたいか、今のうちに話しておきませんか。"]
+        ],
+        cautions: [
+          "植込み時には停止の話を避けがち。むしろこの時点で伝えておく",
+          "終末期のICD作動は本人・家族に大きな苦痛となる。停止の話し合いは遅れやすい"
+        ],
+        related: ["icd", "lvad", "lowerline", "fourbox", "hfcourse"]
+      }
+    ]
+  },
+  urgent: {
+    label: "緊急ACP",
+    title: "どの場面ですか？",
+    subs: [
+      { id: "u-talk", label: "本人と話せる", hint: "急性増悪。挿管・ICU入室の判断が近い",
+        head: "REMAP で5〜10分。価値観を聞いて、医療者が推奨する",
+        summary: "選択肢を並べて委ねない。大事なこと・避けたいことを聞き、本人の言葉を根拠に、医療者が方針をまとめて提案する。迷ったら期間を区切る。",
+        flow: [
+          ["R", "見出しを伝える", "結論を一言で。数値や細かい所見は後回し"],
+          ["E", "感情に応える", "驚きに応え、数秒待つ。ここを飛ばすと後の話が入らない"],
+          ["M", "価値観をつかむ", "一番大事なこと／一番避けたいこと／どこまで頑張れるか。深めるのは1回だけ"],
+          ["A", "要約して返す", "本人の言葉で要約し、合っているか確認する"],
+          ["P", "推奨を示す", "方針をまとめて提案。必要なら期間を区切った治療にする"]
+        ],
+        big: true,
+        phrases: [
+          ["R", "今、心臓の働きがかなり落ちていて、治療をしても良くならない可能性があります。"],
+          ["E", "急なことで、驚かれましたよね。"],
+          ["M", "〇〇さんにとって、一番大事なことは何ですか。"],
+          ["M", "一番避けたいこと、こわいことは何ですか。"],
+          ["M", "どこまでなら頑張れると思いますか。"],
+          ["深める", "それはどうしてですか。"],
+          ["A", "つまり、家に帰れる見込みがあるなら頑張りたい。でも、話もできない状態が長く続くのは避けたい、ということですね。"],
+          ["P", "それを伺ったうえで、私からの提案です。今は全力で治療します。数日たっても見込みが立たなければ、一度立ち止まって一緒に相談させてください。"]
+        ],
+        cautions: [
+          "「挿管しますか？」「心臓マッサージは？」と一つずつ選ばせない",
+          "「全部やりますか？」「延命しますか？」と聞かない",
+          "推奨は本人の言葉を根拠にして伝える"
+        ],
+        related: ["remap", "tlt", "nurse", "dnar", "capacity", "iwish"]
+      },
+      { id: "u-family", label: "本人が話せない", hint: "意識障害・鎮静中。家族・代理意思決定者と話す",
+        head: "「どうしたいか」ではなく「ご本人ならどう言うか」",
+        summary: "家族に決めさせない。本人の推定意思を一緒に探り、最後は医療者の推奨として示す。家族の罪悪感と後悔を減らすことも目的の一つ。",
+        flow: [
+          ["1", "見出しを伝える", "本人の状態と、判断が必要なことを簡潔に"],
+          ["2", "感情に応える", "家族の驚き・不安を受け止める"],
+          ["3", "役割を伝える", "決めてもらうのではなく、本人の考えを教えてほしいと伝える"],
+          ["4", "推定意思を集める", "ふだんの発言、似た状況での反応、大事にしてきたこと。過去のACP記録も確認"],
+          ["5", "推奨を示す", "集まった本人像を根拠に、医療者が方針を提案する。期間を区切ることも有効"],
+          ["6", "家族をケアする", "判断の重荷を背負わせない言葉をかける。来られない家族への連絡も"]
+        ],
+        phrases: [
+          ["役割", "ご家族に決めていただきたいのではありません。〇〇さんが今ここで話せたら何と言うか、それを教えていただきたいのです。"],
+          ["推定", "ふだん、病気や入院のことで何かおっしゃっていましたか。"],
+          ["推定", "似たような状況の方を見て、何か言っていたことはありますか。"],
+          ["推定", "〇〇さんが大事にしてきたのは、どんなことでしたか。"],
+          ["推奨", "伺ったお話から考えると、〇〇さんなら△△を望まれると思います。私たちとしては□□をおすすめします。"],
+          ["ケア", "これは私たちチームで考えた方針です。ご家族が一人で背負うことではありません。"]
+        ],
+        cautions: [
+          "「どうしますか？」と家族に選択を委ねない",
+          "家族の希望と本人の推定意思を区別して聞く",
+          "日本には代理意思決定者を定める法律がない。厚労省ガイドラインに沿い、家族等と医療・ケアチームで本人の推定意思を尊重する"
+        ],
+        related: ["surrogate", "mhlw", "tlt", "sangakkai", "japanfeatures", "fourbox"]
+      },
+      { id: "u-conflict", label: "意見が割れる", hint: "本人と家族、家族間、またはチーム内で方針が合わない",
+        head: "4分割法で論点を整理し、多職種で話し合う",
+        summary: "対立の多くは、同じ事実を違う視点から見ていることで起きる。4分割法で論点を分け、本人の意思を中心に据えて、多職種で合意を探す。",
+        flow: [
+          ["1", "4分割表を埋める", "医学的適応／患者の意向／QOL／周囲の状況に分けて整理する"],
+          ["2", "対立の中身を聞く", "反対している人の心配や恐れを聞く。多くは愛情や罪悪感から来ている"],
+          ["3", "本人の意思を中心に", "本人の言葉（過去の記録を含む）を共通の土台にする"],
+          ["4", "共通の目標を探す", "「〇〇さんに苦しんでほしくない」など、全員が合意できる点から始める"],
+          ["5", "期間を区切った治療", "結論を急がず、期限と評価項目を決めて試す"],
+          ["6", "多職種カンファレンス", "看護・リハ・MSWなども含めて検討。解決しなければ倫理コンサルテーション"]
+        ],
+        phrases: [
+          ["共通点", "皆さん、〇〇さんに苦しんでほしくない、というお気持ちは同じだと感じています。"],
+          ["心配を聞く", "△△に反対されるのは、どんなことが心配だからですか。"],
+          ["本人中心", "〇〇さんご自身は、以前△△とおっしゃっていました。そのことも一緒に考えませんか。"],
+          ["期限", "まず〇日間、この治療を続けてみて、〇日後に皆さんともう一度見直しませんか。"]
+        ],
+        cautions: [
+          "声の大きい人の意見で決めない",
+          "チーム内の意見の相違は、家族の前に出す前にそろえる",
+          "決まったことと、決まらなかったことを記録する"
+        ],
+        related: ["fourbox", "ethicsconsult", "mhlw", "tlt", "sangakkai", "surrogate"]
+      },
+      { id: "u-futile", label: "治療の効果が見込めない", hint: "最大限の治療でも回復が困難と判断される",
+        head: "「何もしない」ではなく「苦痛を和らげる治療に力を注ぐ」",
+        summary: "効果が見込めない治療は推奨しない。チームで医学的判断をそろえ、本人の価値観に沿った看取りの形を提案する。ケアは続くことを明確に伝える。",
+        flow: [
+          ["1", "チームで判断をそろえる", "複数の医師・看護師で医学的見通しを確認する（3学会ガイドラインの手順）"],
+          ["2", "見出しを伝える", "「最大限の治療をしても、回復は難しい状態です」"],
+          ["3", "感情に応える", "沈黙を待つ。家族の反応に NURSE で応える"],
+          ["4", "価値観・推定意思", "本人が大事にしてきたこと、避けたかったことを確認する"],
+          ["5", "推奨を示す", "延命治療の差し控え・中止と、症状緩和を中心にした方針を提案する"],
+          ["6", "続くケアを伝える", "痛み・呼吸苦の緩和、家族が一緒に過ごせる環境、ICD停止の検討"]
+        ],
+        phrases: [
+          ["見出し", "できる限りの治療を続けてきましたが、残念ながら、回復は難しい状態です。"],
+          ["ケアは続く", "これからは、苦しさを和らげる治療に力を注ぎます。治療をやめるのではありません。"],
+          ["推奨", "〇〇さんが大事にされていた△△を考えると、□□の治療は控えて、穏やかに過ごせるようにすることをおすすめします。"],
+          ["家族", "ご家族が決めたのではありません。〇〇さんの思いを大事にして、私たちと一緒に選んだ方針です。"]
+        ],
+        cautions: [
+          "「何もしません」「打つ手がありません」と言わない",
+          "DNAR指示は心肺停止時のCPRを行わないという意味で、他の治療やケアを控える意味ではない",
+          "ICDが植込まれていれば、除細動機能の停止を検討する"
+        ],
+        related: ["sangakkai", "dnar", "palliative", "icd", "iwish", "nurse"]
+      }
+    ]
+  }
+};
+
+// ====================== 関連知識 ======================
+const CATS = ["すべて", "制度・指針", "心不全", "コミュニケーション", "倫理・意思決定", "ACPの考え方"];
+const KB = [
+  { id: "mhlw", cat: "制度・指針", title: "人生の最終段階における医療・ケアの決定プロセスに関するガイドライン", tags: "厚労省 厚生労働省 2018 改訂 家族等 多職種 文書化 推定意思",
+    body: `<p>厚生労働省が2018年に改訂したガイドライン。院内の方針づくりや記録の根拠になる基本文書。</p>
+<ul><li>本人の意思決定を基本とし、<b>繰り返し話し合う</b></li><li>本人が信頼する<b>「家族等」</b>（親しい友人なども含む）が話し合いに加わる</li><li><b>多職種の医療・ケアチーム</b>で方針を検討する</li><li>本人の意思が確認できないときは、家族等が<b>本人の意思を推定</b>し、それを尊重する</li><li>話し合った内容は、そのつど<b>文書に残す</b></li></ul>`,
+    src: "厚生労働省. 人生の最終段階における医療・ケアの決定プロセスに関するガイドライン（2018年3月改訂）" },
+  { id: "fee2024", cat: "制度・指針", title: "2024年度診療報酬改定：意思決定支援が入院料の要件に", tags: "診療報酬 入院料 通則 指針 施設基準 身体拘束",
+    body: `<p>入院料の通則に「意思決定支援」が加わり、多くの入院料で、医療機関が<b>意思決定支援に関する指針を定めていること</b>が施設基準の要件になった。ACPは「やるとよいこと」から「病院としての体制に組み込まれたもの」に変わっている。</p>`,
+    src: "厚生労働省. 令和6年度診療報酬改定。解説記事：GemMed（gemmed.ghc-j.com/?p=59603）ほか" },
+  { id: "jinsei", cat: "制度・指針", title: "人生会議", tags: "愛称 啓発 11月30日 いい看取り",
+    body: `<p>ACPの愛称として厚生労働省が定めた言葉。11月30日が「人生会議の日」。患者向けの啓発資料を配ったり、外来で話題にしたりするきっかけに使える。</p>`,
+    src: "厚生労働省" },
+  { id: "surrogate", cat: "倫理・意思決定", title: "代理意思決定者と推定意思", tags: "家族 代理 法律 推定意思 substituted judgment 決めさせない",
+    body: `<p>日本には、代理意思決定者を定める法律がない。そのため「誰が代わりに考えるか」は、<b>本人に名前を挙げてもらい、記録しておく</b>ことが特に重要。</p>
+<p>本人が話せないときは、家族に「どうしたいか」を聞くのではなく、<b>「ご本人ならどう言うと思うか」</b>を聞く（推定意思）。最終的な方針は医療者の推奨として示し、家族が「決めた」形にしない。</p>`,
+    src: "厚生労働省ガイドライン（2018）" },
+  { id: "sangakkai", cat: "制度・指針", title: "救急・集中治療における終末期医療に関するガイドライン（3学会）", tags: "日本集中治療医学会 日本救急医学会 日本循環器学会 終末期 差し控え 中止 ICU",
+    body: `<p>日本集中治療医学会・日本救急医学会・日本循環器学会による提言（2014）。救急・集中治療の場で、終末期と判断する手順と、延命措置の差し控え・中止の考え方を示す。</p>
+<ul><li>終末期の判断は、主治医を含む<b>複数の医師と看護師などの医療チーム</b>で行う</li><li>本人の意思、推定意思、家族等の意思を確認する</li><li>延命措置の差し控え・中止の選択肢を含めて話し合い、経過を記録する</li></ul>`,
+    src: "日本集中治療医学会・日本救急医学会・日本循環器学会. 救急・集中治療における終末期医療に関するガイドライン ～3学会からの提言～. 2014" },
+  { id: "hfcourse", cat: "心不全", title: "心不全の経過と予後予測の難しさ", tags: "病みの軌跡 増悪 突然死 予後 trajectory",
+    body: `<p>がんのように最後の数か月で急に悪くなる経過とは違い、心不全は<b>増悪と改善を繰り返しながら</b>徐々に悪化し、<b>突然死も起こりうる</b>。</p>
+<p>「もう少し悪くなってから」と待つと、話し合える時期を逃しやすい。安定期から少しずつ始め、節目ごとに見直すのが基本。</p>`,
+    src: "日本循環器学会／日本心不全学会. 2021年改訂版 循環器疾患における緩和ケアについての提言" },
+  { id: "trigger", cat: "心不全", title: "ACPを始める・見直すきっかけ", tags: "トリガー サプライズクエスチョン surprise question 再入院 強心薬 NYHA タイミング",
+    body: `<ul><li>1年以内の再入院（患者の約半数がこの時期に話し合いを望む：Kitakata 2021）</li><li>利尿薬が効きにくい、低血圧や腎機能悪化でGDMTを減量せざるを得ない</li><li>強心薬から離脱できない、悪液質、NYHA IV度が続く</li><li>ICDの作動、LVADの適応評価の開始</li><li><b>サプライズ・クエスチョン</b>：「この患者さんが1年以内に亡くなったら驚くか？」に「驚かない」と答えたとき</li></ul>
+<p>日本の心不全入院患者171人の調査では、74.3%がACPを重要と考えていたが、ACPの話し合いを経験していたのは21.7%だった。</p>`,
+    src: "Kitakata H, et al. ESC Heart Fail. 2021;8:5102-11" },
+  { id: "icd", cat: "心不全", title: "ICDの停止（除細動機能のオフ）", tags: "ICD CRT-D デバイス 停止 ショック 終末期 ペーシング",
+    body: `<p>ICDの除細動機能を止めることは、延命治療の差し控え・中止として、<b>倫理的にも法的にも認められる</b>という国際的な合意がある。</p>
+<ul><li><b>植込みの時点で</b>「将来、止めるという選択もできる」と伝えておくと、後の会話が楽になる</li><li>停止しても<b>ペーシング機能や他の心不全治療は続けられる</b></li><li>終末期の作動は本人・家族に大きな苦痛となる。停止の話し合いは遅れやすいので意識して行う</li></ul>`,
+    src: "Lampert R, et al. HRS Expert Consensus Statement on the Management of CIEDs in Patients Nearing End of Life or Requesting Withdrawal of Therapy. Heart Rhythm. 2010" },
+  { id: "lvad", cat: "心不全", title: "LVADとDestination Therapy・準備計画", tags: "LVAD 補助人工心臓 DT destination therapy 準備計画 preparedness planning",
+    body: `<p>日本では2021年から、心臓移植を前提としない<b>Destination Therapy（DT）</b>が保険適用になり、移植適応のない方にも選択肢として話題に出るようになった。</p>
+<p>装着前に、脳卒中などの重い合併症が起きたときの方針を話しておく<b>準備計画（preparedness planning）</b>が推奨されている。装置管理や介護者の必要など、装着後の生活像を具体的に示すことが大切。</p>`,
+    src: "Swetz KM, et al. Preparedness planning before mechanical circulatory support. Mayo Clin Proc. 2011 ほか" },
+  { id: "palliative", cat: "心不全", title: "心不全の緩和ケア", tags: "緩和ケア 症状緩和 呼吸困難 緩和ケア診療加算 末期心不全",
+    body: `<p>緩和ケアは終末期だけのものではなく、<b>心不全治療と並行して</b>導入できる。呼吸困難・倦怠感・抑うつなどの症状緩和と、意思決定支援が柱。</p>
+<p>診療報酬上も、2018年度改定で末期心不全が緩和ケア診療加算の対象に加わっている。</p>`,
+    src: "日本循環器学会／日本心不全学会. 2021年改訂版 循環器疾患における緩和ケアについての提言" },
+  { id: "nurse", cat: "コミュニケーション", title: "NURSE：感情に応える5つの型", tags: "感情 共感 エンパシー VitalTalk",
+    body: `<div class="tw"><table class="mini"><tr><th>型</th><th>例</th></tr>
+<tr><td>Naming（名前をつける）</td><td>「不安なお気持ちなんですね」</td></tr>
+<tr><td>Understanding（理解を示す）</td><td>「そう感じるのは自然なことだと思います」</td></tr>
+<tr><td>Respecting（敬意を示す）</td><td>「ここまで本当によく頑張ってこられましたね」</td></tr>
+<tr><td>Supporting（支えを示す）</td><td>「どうなっても、私たちは一緒に考えます」</td></tr>
+<tr><td>Exploring（探る）</td><td>「もう少し聞かせてください」</td></tr></table></div>`,
+    src: "Back AL, Arnold RM, Tulsky JA. Mastering Communication with Seriously Ill Patients. 2009 / VitalTalk" },
+  { id: "asktellask", cat: "コミュニケーション", title: "Ask-Tell-Ask", tags: "説明 理解 確認 情報提供",
+    body: `<p>説明の前に「どう聞いていますか」と<b>尋ね（Ask）</b>、伝えて（Tell）、そのあとに「どう受け止められましたか」と<b>確かめる（Ask）</b>。説明が一方通行になるのを防ぎ、相手の理解に合わせて話せる。</p>`,
+    src: "VitalTalk" },
+  { id: "iwish", cat: "コミュニケーション", title: "I wish / I worry（希望と懸念を両方伝える）", tags: "hope worry 最善を期待し最悪に備える 予後 伝え方",
+    body: `<p>「良くなることを願っています（I wish）。同時に、そうならない場合も心配しています（I worry）」と、希望と懸念を両方言葉にする。</p>
+<p>関連して「最善を期待し、最悪に備える（Hope for the best, prepare for the worst）」という言い方もあり、日本の患者さんにも受け入れられやすい。</p>`,
+    src: "Back AL, et al. Hope for the best, and prepare for the worst. Ann Intern Med. 2003" },
+  { id: "remap", cat: "コミュニケーション", title: "REMAP：急性期の目標設定の型", tags: "Reframe Expect emotion Map Align Propose 緊急 goals of care",
+    body: `<ul><li><b>R</b>eframe：見出しを伝える</li><li><b>E</b>xpect emotion：感情に応える</li><li><b>M</b>ap：価値観をつかむ（大事なこと・避けたいこと）</li><li><b>A</b>lign：要約して返す</li><li><b>P</b>ropose：医療者が推奨を示す</li></ul>
+<p>選択肢を並べて委ねず、価値観を根拠に推奨する点が要。</p>`,
+    src: "Childers JW, Back AL, Tulsky JA, Arnold RM. REMAP: A Framework for Goals of Care Conversations. J Oncol Pract. 2017;13:e844-50" },
+  { id: "spikes", cat: "コミュニケーション", title: "SPIKES：悪い知らせの伝え方", tags: "悪い知らせ bad news 告知 Setting Perception Invitation Knowledge Emotions Strategy",
+    body: `<ul><li><b>S</b>etting：場を整える（座る、同席者、時間）</li><li><b>P</b>erception：本人の理解を尋ねる</li><li><b>I</b>nvitation：どこまで知りたいかを確認する</li><li><b>K</b>nowledge：情報を短く、わかる言葉で伝える</li><li><b>E</b>motions：感情に応える</li><li><b>S</b>trategy & Summary：今後の方針とまとめ</li></ul>`,
+    src: "Baile WF, et al. SPIKES—A six-step protocol for delivering bad news. Oncologist. 2000;5:302-11" },
+  { id: "tlt", cat: "倫理・意思決定", title: "期間を区切った治療（time-limited trial）", tags: "TLT 期限 見直し 集中治療 二択を避ける",
+    body: `<p>集中治療などを、<b>期間と評価項目を決めて</b>試し、期限が来たら本人の目標に照らして見直す方法。</p>
+<ul><li>「やる／やらない」の二択を避けられる</li><li>本人の下限ラインを見直しの基準として組み込める</li><li>家族が「最初から諦めた」という罪悪感を持たずに済む</li><li>治療反応が読みにくい心不全と相性がよい</li></ul>`,
+    src: "Quill TE, Holloway R. Time-limited trials near the end of life. JAMA. 2011;306:1483-4" },
+  { id: "fourbox", cat: "倫理・意思決定", title: "4分割法（臨床倫理の4分割表）", tags: "Jonsen ジョンセン 臨床倫理 4分割 医学的適応 患者の意向 QOL 周囲の状況 カンファレンス 対立",
+    body: `<p>Jonsenらによる、臨床の倫理的な問題を4つの視点に分けて整理する方法。意見が割れたときや、多職種カンファレンスで論点をそろえるのに使う。</p>
+<div class="grid4">
+<div><b>医学的適応</b>診断・予後、治療の目標、成功の見込み、治療しない場合の見通し</div>
+<div><b>患者の意向</b>本人の意思・判断能力、事前の意思表示、推定意思、代理意思決定者</div>
+<div><b>QOL</b>治療後に見込まれる生活、本人にとっての「受け入れられない状態」、苦痛</div>
+<div><b>周囲の状況</b>家族の状況・意向、経済的問題、医療者側の事情、法律・施設の方針</div>
+</div>
+<p>今回の「下限ライン」は、主に<b>患者の意向</b>と<b>QOL</b>の欄を本人の言葉で埋める作業にあたる。</p>`,
+    src: "Jonsen AR, Siegler M, Winslade WJ. Clinical Ethics（臨床倫理学）" },
+  { id: "ethicsconsult", cat: "倫理・意思決定", title: "多職種カンファレンスと臨床倫理コンサルテーション", tags: "倫理委員会 倫理コンサル 多職種 MSW 合意形成",
+    body: `<p>方針が決まらない、家族とチーム・チーム内で意見が割れるときは、看護師・リハスタッフ・MSWなども含めた<b>多職種カンファレンス</b>で検討する。</p>
+<p>それでも解決しない場合は、院内の<b>臨床倫理コンサルテーション</b>（倫理委員会・倫理コンサルテーションチーム）に相談する。4分割表を埋めて持ち込むと話が早い。</p>`,
+    src: "厚生労働省ガイドライン（2018）：方針が決まらない場合は、複数の専門家からなる話し合いの場を設けることを求めている" },
+  { id: "dnar", cat: "倫理・意思決定", title: "DNARは「治療しない」ではない", tags: "DNAR DNR 心肺蘇生 CPR 誤解 差し控え",
+    body: `<p>DNAR指示は、<b>心肺停止時に心肺蘇生（CPR）を行わない</b>という意味に限られる。酸素、薬物療法、ICU入室など、他の治療やケアを控えることと同じではない。</p>
+<p>DNARが「何もしない」と誤解されると、必要な治療まで差し控えられるおそれがある。他の治療の方針は、それぞれ別に話し合う。</p>`,
+    src: "日本集中治療医学会. Do Not Attempt Resuscitation（DNAR）指示のあり方についての勧告. 2017" },
+  { id: "capacity", cat: "倫理・意思決定", title: "意思決定能力の4つの要素", tags: "判断能力 意思能力 Appelbaum 理解 認識 論理的思考 選択の表明 認知症 せん妄",
+    body: `<ul><li><b>理解</b>：説明された情報を理解できる</li><li><b>認識</b>：それを自分のこととして捉えられる</li><li><b>論理的思考</b>：選択肢を比べて考えられる</li><li><b>選択の表明</b>：自分の選択を伝えられる</li></ul>
+<p>能力は「ある／ない」の二択ではなく、判断の重さや時間帯（せん妄など）で変わる。能力が低下していても、本人の気持ちや好みは聞いて尊重する。</p>`,
+    src: "Appelbaum PS. Assessment of patients' competence to consent to treatment. N Engl J Med. 2007;357:1834-40" },
+  { id: "lowerline", cat: "ACPの考え方", title: "下限ライン：受け入れられない状態を本人の言葉で", tags: "スケール ゴールはここ 楽しみ 生きがい 気がかり 生きている意味がない オープニング フォローアップ",
+    body: `<p>健康・生活状態を良い方から悪い方へ並べたとき、本人が<b>「この状態になったら生きている意味がない」と感じる線</b>の位置を、本人の言葉で特定する。</p>
+<ul><li>話題の順序：楽しみ → 生きがい → 気がかり → 生きている意味がない</li><li>深め方：Tell me more／Why?／What else?</li><li>線の位置は人によって大きく異なる。医療者の想定で決めない</li><li>線は動く。節目ごとに見直す</li></ul>`,
+    src: "本資料（ACPのコミュニケーション メイン資料）" },
+  { id: "sicg", cat: "ACPの考え方", title: "Serious Illness Conversation Guide（SICG）と2023年改訂", tags: "Ariadne Labs 重篤な疾患 critical abilities 大切な能力 障害 改訂",
+    body: `<p>Ariadne Labs が開発した、重篤な疾患をもつ人との対話の手引き。日本語版もある。</p>
+<p>旧版の「それなしでは生きることが考えられないほど大切な能力は何ですか」という問いは、障害とともに生きる人に価値判断的に響きうるとして、2023年の改訂で<b>人生に喜びや意味をもたらす活動</b>を尋ねる問いに置き換えられた。</p>`,
+    src: "Ariadne Labs. Serious Illness Conversation Guide（2023）; J Gen Intern Med. 2025 doi:10.1007/s11606-025-10147-y" },
+  { id: "responseshift", cat: "ACPの考え方", title: "response shift：受け入れられる状態は変わる", tags: "レスポンスシフト 適応 states worse than death 死より悪い状態 意向の変化",
+    body: `<p>実際に状態が悪化すると、以前は許容できないとしていた状態を受け入れるようになる人は少なくない。</p>
+<p>重症入院患者180人の調査では、失禁・人工呼吸器・寝たきりなどを約7割が「死と同等かそれより悪い」と答えたが、回答者はいずれもその状態を未経験だった。心不全患者でも、延命治療や蘇生の意向は時間とともに大きく揺れ動く。</p>`,
+    src: "Rubin EB, Buehler AE, Halpern SD. JAMA Intern Med. 2016;176:1557-9" },
+  { id: "japanfeatures", cat: "ACPの考え方", title: "日本の患者さん・家族の特徴", tags: "お任せ 家族同席 告知 縁起でもない 文化 本人に言わないで",
+    body: `<ul><li><b>「お任せします」「家族に任せる」</b>はよくある答え。止めずに、任せる<b>中身</b>（何を大事にしてほしいか）を聞く</li><li><b>家族同席を好む</b>方が多い。本人と家族の意見の違いがわかるだけでも大事な情報</li><li>「縁起でもない」と感じる方には、<b>「もしも、の話ですが」</b>と仮定形で入る</li><li>家族が「本人には言わないで」と求める場合は、家族の心配を聞いたうえで、本人がどこまで知りたいかを本人に確認する</li></ul>`,
+    src: "臨床での一般的な知見" },
+  { id: "evidence", cat: "ACPの考え方", title: "ACPのエビデンスと最近の考え方", tags: "エビデンス Detering Morrison 効果 家族 不安 抑うつ PTSD serious illness communication",
+    body: `<p><b>わかっていること</b>：ACPは家族の不安・抑うつ・PTSDを減らすことが示されている（Detering 2010）。</p>
+<p><b>議論されていること</b>：事前に決めた内容どおりの治療を受けられるかについては、効果がはっきりしないという指摘がある（Morrison 2021）。そのため最近は、事前に治療を決めることより、<b>価値観を共有しておき、その場で目標を話し合えるようにする</b>ことが重視されている。</p>`,
+    src: "Detering KM, et al. BMJ. 2010;340:c1345 / Morrison RS, et al. JAMA. 2021;326:1575-6" },
+  { id: "record", cat: "ACPの考え方", title: "記録と共有：6つの項目", tags: "記録 カルテ テンプレート 共有 地域連携 退院",
+    body: `<ol><li>楽しみ・生きがい</li><li>気がかり</li><li>下限ライン（本人の言葉のまま）</li><li>その背景</li><li>代理意思決定者・同席者</li><li>日付・次回確認の予定</li></ol>
+<p>電子カルテの決まった場所（テンプレート）に残し、退院時はかかりつけ医・訪問看護・ケアマネジャーに本人の言葉のまま伝える。</p>`,
+    src: "本資料" },
+  { id: "team", cat: "ACPの考え方", title: "心リハ・外来はACPの好機／医療者のセルフケア", tags: "心臓リハビリ 心リハ 外来 看護 継続 デブリーフィング 燃え尽き",
+    body: `<p>心リハや外来看護は継続して関わるので関係ができており、「楽しみ」「生きがい」が自然な会話の中で出てくる。聞いた内容をカルテの決まった場所に残すだけで、急性期チームの財産になる。</p>
+<p>重い会話が続くと医療者も消耗する。振り返り（デブリーフィング）の場を設けると、チームとして長く続けられる。</p>`,
+    src: "臨床での一般的な知見" }
+];
+
+// ====================== 描画 ======================
+const $ = (s) => document.querySelector(s);
+const kbById = Object.fromEntries(KB.map((k) => [k.id, k]));
+let mode = null, subId = null, cat = "すべて", query = "";
+
+function setModeColors(m) {
+  const r = document.documentElement.style;
+  const main = document.querySelector("main");
+  const v = m === "urgent" ? ["--urgent", "--urgent-bg", "--on-urgent"] : ["--calm", "--calm-bg", "--on-calm"];
+  main.style.setProperty("--mode", `var(${v[0]})`);
+  main.style.setProperty("--mode-bg", `var(${v[1]})`);
+  main.style.setProperty("--on-mode", `var(${v[2]})`);
+}
+
+function selectMode(m) {
+  mode = m; subId = null;
+  document.querySelectorAll(".choice").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === m)));
+  setModeColors(m);
+  const sc = SCENES[m];
+  $("#step2").hidden = false;
+  $("#step2-title").textContent = sc.title;
+  const subs = $("#subs"); subs.innerHTML = "";
+  sc.subs.forEach((s) => {
+    const b = document.createElement("button");
+    b.className = "sub"; b.id = "s-" + s.id; b.setAttribute("aria-pressed", "false");
+    b.innerHTML = `<b>${s.label}</b><small>${s.hint}</small>`;
+    b.addEventListener("click", () => selectSub(s.id));
+    subs.appendChild(b);
+  });
+  $("#result").hidden = true; $("#placeholder").hidden = false;
+  save();
+}
+
+function esc(t) { return t.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+function selectSub(id, noScroll) {
+  subId = id;
+  const sc = SCENES[mode]; const s = sc.subs.find((x) => x.id === id);
+  document.querySelectorAll(".sub").forEach((b) => b.setAttribute("aria-pressed", String(b.id === "s-" + id)));
+  const r = $("#result");
+  r.innerHTML = `
+    <div class="result-head"><div class="crumb">${sc.label} ／ ${s.label}</div><h2>${s.head}</h2></div>
+    <div class="result-body">
+      <div class="summary">${s.summary}</div>
+      <div><h3>おすすめの進め方</h3><ol class="flow">${s.flow.map((f) => `<li><span class="n${s.big ? " lg" : ""}">${f[0]}</span><div><b>${f[1]}</b><p>${f[2]}</p></div></li>`).join("")}</ol></div>
+      <div><h3>そのまま使えるフレーズ</h3><div class="phrases">${s.phrases.map((p, i) => `<div class="phrase"><span class="tag">${p[0]}</span><q>${esc(p[1])}</q><button class="copy" data-i="${i}" aria-label="このフレーズをコピー">コピー</button></div>`).join("")}</div></div>
+      <div><h3>気をつけること</h3><ul class="cautions">${s.cautions.map((c) => `<li>${c}</li>`).join("")}</ul></div>
+      <div><h3>関連知識</h3><div class="rel">${s.related.map((k) => kbById[k] ? `<button class="chip" data-kb="${k}">${kbById[k].title}</button>` : "").join("")}</div></div>
+      <div><button class="reset" id="reset">最初からやり直す</button></div>
+    </div>`;
+  r.hidden = false; $("#placeholder").hidden = true;
+  r.querySelectorAll(".copy").forEach((b) => b.addEventListener("click", () => copyPhrase(b, s.phrases[+b.dataset.i][1])));
+  r.querySelectorAll("[data-kb]").forEach((b) => b.addEventListener("click", () => openKb(b.dataset.kb)));
+  $("#reset").addEventListener("click", reset);
+  if (!noScroll) r.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  save();
+}
+
+function copyPhrase(btn, text) {
+  const done = () => { btn.textContent = "コピー済み"; btn.classList.add("done"); setTimeout(() => { btn.textContent = "コピー"; btn.classList.remove("done"); }, 1600); };
+  try {
+    navigator.clipboard.writeText(text).then(done, () => selectText(btn));
+  } catch (e) { selectText(btn); }
+}
+function selectText(btn) {
+  const q = btn.parentElement.querySelector("q");
+  const range = document.createRange(); range.selectNodeContents(q);
+  const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+  btn.textContent = "選択しました";
+}
+
+function reset() {
+  mode = null; subId = null;
+  document.querySelectorAll(".choice").forEach((b) => b.setAttribute("aria-pressed", "false"));
+  $("#step2").hidden = true; $("#result").hidden = true; $("#placeholder").hidden = false;
+  window.scrollTo({ top: 0 });
+  save();
+}
+
+// ---- library ----
+function renderCats() {
+  const el = $("#cats"); el.innerHTML = "";
+  CATS.forEach((c) => {
+    const b = document.createElement("button");
+    b.className = "chip"; b.textContent = c; b.setAttribute("aria-pressed", String(c === cat));
+    b.addEventListener("click", () => { cat = c; renderCats(); renderKb(); });
+    el.appendChild(b);
+  });
+}
+function plain(html) { const d = document.createElement("div"); d.innerHTML = html; return d.textContent; }
+function hl(text, q) {
+  if (!q) return text;
+  const i = text.toLowerCase().indexOf(q.toLowerCase());
+  if (i < 0) return text;
+  return text.slice(0, i) + "<mark>" + text.slice(i, i + q.length) + "</mark>" + text.slice(i + q.length);
+}
+function renderKb() {
+  const q = query.trim();
+  const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+  const list = KB.filter((k) => (cat === "すべて" || k.cat === cat) &&
+    terms.every((t) => (k.title + " " + k.tags + " " + plain(k.body) + " " + k.cat).toLowerCase().includes(t)));
+  $("#count").textContent = `${list.length} / ${KB.length} 件`;
+  const el = $("#entries");
+  if (!list.length) { el.innerHTML = `<p class="empty">「${esc(q)}」に当てはまる項目はありません。別の言葉で探すか、カテゴリを「すべて」にしてください。</p>`; return; }
+  el.innerHTML = list.map((k) => `<details class="kb" id="kb-${k.id}"${terms.length && list.length <= 3 ? " open" : ""}>
+    <summary><span class="cat">${k.cat}</span><span class="ti">${hl(k.title, terms[0])}</span></summary>
+    <div class="kb-body">${k.body}<div class="src">出典：${k.src}</div></div></details>`).join("");
+}
+function openKb(id) {
+  if (cat !== "すべて" || query) { cat = "すべて"; query = ""; $("#q").value = ""; renderCats(); renderKb(); }
+  const d = document.getElementById("kb-" + id); if (!d) return;
+  d.open = true; d.classList.remove("flash"); void d.offsetWidth; d.classList.add("flash");
+  d.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" });
+}
+
+$("#q").addEventListener("input", (e) => {
+  query = e.target.value; renderKb();
+  if (matchMedia("(max-width:980px)").matches && query) $("#lib").scrollIntoView({ block: "start" });
+});
+document.querySelectorAll(".choice").forEach((b) => b.addEventListener("click", () => selectMode(b.dataset.mode)));
+
+function save() { try { localStorage.setItem("acpnavi", JSON.stringify({ mode, subId })); } catch (e) {} }
+function restore() {
+  try {
+    const s = JSON.parse(localStorage.getItem("acpnavi") || "null");
+    if (s && s.mode && SCENES[s.mode]) { selectMode(s.mode); if (s.subId) selectSub(s.subId, true); }
+  } catch (e) {}
+}
+
+// ---- print ----
+const MODEVARS = {
+  nonurgent: "--mode:var(--calm);--mode-bg:var(--calm-bg)",
+  urgent: "--mode:var(--urgent);--mode-bg:var(--urgent-bg)"
+};
+function pScene(m, s) {
+  const sc = SCENES[m];
+  return `<section class="p-scene" style="${MODEVARS[m]}">
+    <div class="p-head"><div class="crumb">${sc.label} ／ ${s.label}（${s.hint}）</div><h2>${s.head}</h2></div>
+    <p class="p-sum">${s.summary}</p>
+    <h3>おすすめの進め方</h3>
+    <ol class="p-flow">${s.flow.map((f) => `<li><span class="n">${f[0]}</span><div><b>${f[1]}</b>${f[2]}</div></li>`).join("")}</ol>
+    <h3>そのまま使えるフレーズ</h3>
+    <ul class="p-ph">${s.phrases.map((p) => `<li><span class="tag">${p[0]}</span>「${esc(p[1])}」</li>`).join("")}</ul>
+    <h3>気をつけること</h3>
+    <ul class="p-list">${s.cautions.map((c) => `<li>${c}</li>`).join("")}</ul>
+    <h3>関連知識</h3>
+    <p>${s.related.map((k) => kbById[k] ? kbById[k].title : "").filter(Boolean).join("／")}</p>
+  </section>`;
+}
+function pKb(list) {
+  return `<section class="p-scene"><div class="p-head" style="--mode:var(--ink);--mode-bg:var(--surface-2)"><div class="crumb">関連知識</div><h2>知っておくとよい情報（${list.length}項目）</h2></div>
+    ${list.map((k) => `<div class="p-kb"><div class="cat">${k.cat}</div><h3>${k.title}</h3>${k.body}<div class="src">出典：${k.src}</div></div>`).join("")}</section>`;
+}
+function filteredKb() {
+  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  return KB.filter((k) => (cat === "すべて" || k.cat === cat) &&
+    terms.every((t) => (k.title + " " + k.tags + " " + plain(k.body) + " " + k.cat).toLowerCase().includes(t)));
+}
+function doPrint(title, inner) {
+  const d = new Date();
+  const date = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+  $("#print-area").innerHTML = `<div class="p-doc"><h1>ACPナビ：${title}</h1><p class="p-meta">印刷日 ${date}　／　教育・実践支援のための資料。個々の判断は施設の方針と担当チームの臨床判断に従ってください。</p>${inner}
+    <p class="p-note">フレーズ・会話例は例示です。文献情報は利用前に原典で確認してください。</p></div>`;
+  closeMenu();
+  setTimeout(() => { try { window.print(); } catch (e) {} }, 50);
+}
+const allScenes = (m) => SCENES[m].subs.map((s) => pScene(m, s)).join("");
+$("#pr-current").addEventListener("click", () => {
+  if (!mode || !subId) return;
+  const s = SCENES[mode].subs.find((x) => x.id === subId);
+  doPrint(`${SCENES[mode].label}／${s.label}`, pScene(mode, s) + pKb(s.related.map((k) => kbById[k]).filter(Boolean)));
+});
+$("#pr-mode").addEventListener("click", () => {
+  if (mode) doPrint(`${SCENES[mode].label} ハンドブック`, allScenes(mode));
+  else doPrint("全場面ハンドブック", allScenes("nonurgent") + allScenes("urgent"));
+});
+$("#pr-all").addEventListener("click", () => doPrint("完全版", allScenes("nonurgent") + allScenes("urgent") + pKb(KB)));
+$("#pr-kb").addEventListener("click", () => {
+  const list = filteredKb();
+  doPrint("関連知識" + (query.trim() ? `（検索：${query.trim()}）` : cat !== "すべて" ? `（${cat}）` : ""), pKb(list.length ? list : KB));
+});
+
+let framed = false;
+try { framed = window.self !== window.top; } catch (e) { framed = true; }
+$("#printnote").hidden = !framed;
+function openMenu() {
+  $("#pr-current").disabled = !(mode && subId);
+  $("#printmenu").hidden = false; $("#printbtn").setAttribute("aria-expanded", "true");
+}
+function closeMenu() { $("#printmenu").hidden = true; $("#printbtn").setAttribute("aria-expanded", "false"); }
+$("#printbtn").addEventListener("click", (e) => { e.stopPropagation(); $("#printmenu").hidden ? openMenu() : closeMenu(); });
+document.addEventListener("click", (e) => { if (!e.target.closest(".printwrap")) closeMenu(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
+window.addEventListener("afterprint", () => { $("#print-area").innerHTML = ""; });
+
+renderCats(); renderKb(); restore();
+</script>
